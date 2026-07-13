@@ -1,3 +1,16 @@
+# Environment
 /.venv/**
+.env
+
+# Python cache
 **/__pycache__/**
 **/.pytest_cache/**
+*.pyc
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# IDE files
+.vscode/
