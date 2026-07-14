@@ -7,7 +7,7 @@ class ItemBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=100,
                       description="Item name")
     quantity: float = Field(..., gt=0, description="Item quantity")
-    unit: str = Field(..., min_length=1, max_length=100,
+    unit: str = Field(..., min_length=1, max_length=50,
                       description="Unit of measure")
 
 
