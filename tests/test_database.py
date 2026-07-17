@@ -4,6 +4,14 @@ from app.database import engine, SessionLocal, Base
 from app.models import Item
 
 
+@pytest.fixture(scope="function", autouse=True)
+def setup_database():
+    """Create tables before each test and clean up after."""
+    Base.metadata.create_all(bind=engine)
+    yield
+    Base.metadata.drop_all(bind=engine)
+
+
 def test_database_connection():
     """Test that we can connect to the database."""
     try:

@@ -13,8 +13,6 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 # Encapsulate a database session, close when done
-
-
 def get_db():
     db = SessionLocal()
     try:
