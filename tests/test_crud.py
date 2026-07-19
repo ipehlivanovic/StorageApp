@@ -1,6 +1,7 @@
 import pytest
-
-from app.database import SessionLocal, engine, Base
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from app.models import Base
 from app.schemas import ItemCreate, ItemUpdate
 from app.crud import create_item, update_item, get_item, get_items, delete_item
 
@@ -8,16 +9,20 @@ from app.crud import create_item, update_item, get_item, get_items, delete_item
 @pytest.fixture(scope="function")
 def db():
     """Provide a database session for testing."""
+    # ✅ Create engine and tables inside the fixture
+    engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False}
+    )
     Base.metadata.create_all(bind=engine)
-
-    db = SessionLocal()
+    
+    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    db = TestingSessionLocal()
     try:
         yield db
     finally:
         db.rollback()
         db.close()
-
-    Base.metadata.drop_all(bind=engine)
 
 
 def test_create_item(db):

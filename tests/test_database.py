@@ -1,21 +1,34 @@
 import pytest
-from sqlalchemy import inspect, text
-from app.database import engine, SessionLocal, Base
-from app.models import Item
+from sqlalchemy import create_engine, inspect, text
+from sqlalchemy.orm import sessionmaker
+from app.models import Base, Item
 
 
 @pytest.fixture(scope="function", autouse=True)
 def setup_database():
-    """Create tables before each test and clean up after."""
-    Base.metadata.create_all(bind=engine)
+    """Create a fresh in-memory database for each test."""
+    # ✅ Create a brand new in-memory engine - NOT the real one!
+    test_engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False}
+    )
+    
+    # ✅ Create tables in memory using the blueprint
+    Base.metadata.create_all(bind=test_engine)
+    
+    # ✅ Store the engine so tests can access it
+    pytest.test_engine = test_engine
+    
     yield
-    Base.metadata.drop_all(bind=engine)
-
+    
+    # ✅ No drop_all needed - in-memory database auto-destroys!
+    # The database disappears when the connection closes
 
 def test_database_connection():
     """Test that we can connect to the database."""
     try:
-        db = SessionLocal()
+        TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=pytest.test_engine)
+        db = TestingSessionLocal()
         db.execute(text("SELECT 1"))
         db.close()
         assert True
@@ -25,14 +38,14 @@ def test_database_connection():
 
 def test_tables_created():
     """Test that the 'items' table exists."""
-    inspector = inspect(engine)
+    inspector = inspect(pytest.test_engine)
     tables = inspector.get_table_names()
     assert "items" in tables, "'items' table not found in database"
 
 
 def test_item_table_columns():
     """Test that the 'items' table has the correct columns."""
-    inspector = inspect(engine)
+    inspector = inspect(pytest.test_engine)
     columns = inspector.get_columns("items")
     column_names = [col["name"] for col in columns]
     
