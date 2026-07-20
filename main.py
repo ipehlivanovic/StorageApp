@@ -1,12 +1,15 @@
 from fastapi import FastAPI 
 from app.database import engine
 from app.models import Base
+from app.routers import items
 
 # Create all tables or connect to the existing ones
 Base.metadata.create_all(bind=engine)
 
 # Start the app
 app = FastAPI()
+
+app.include_router(items.router)
 
 # Endpoints
 @app.get("/")
