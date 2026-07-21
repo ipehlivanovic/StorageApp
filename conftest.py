@@ -1,5 +1,9 @@
+import os
 import shutil
 from pathlib import Path
+
+# Set the database URL to in-memory BEFORE any tests run
+os.environ["DATABASE_URL"] = "sqlite:///:memory:"
 
 
 def pytest_sessionfinish(session, exitstatus):

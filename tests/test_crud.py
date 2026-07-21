@@ -1,6 +1,6 @@
 import pytest
-from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from app.database import engine
 from app.models import Base
 from app.schemas import ItemCreate, ItemUpdate
 from app.crud import create_item, update_item, get_item, get_items, delete_item
@@ -9,14 +9,14 @@ from app.crud import create_item, update_item, get_item, get_items, delete_item
 @pytest.fixture(scope="function")
 def db():
     """Provide a database session for testing."""
-    # ✅ Create engine and tables inside the fixture
-    engine = create_engine(
-        "sqlite:///:memory:",
-        connect_args={"check_same_thread": False}
-    )
+    # Since DATABASE_URL is set to :memory:, this creates an in-memory engine
+
+    TestingSessionLocal = sessionmaker(
+        autocommit=False, autoflush=False, bind=engine)
+
+    # Create tables in the in-memory database
     Base.metadata.create_all(bind=engine)
-    
-    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
     db = TestingSessionLocal()
     try:
         yield db
@@ -66,12 +66,6 @@ def test_get_items(db):
     items = get_items(db)
 
     assert len(items) >= 3
-
-    # Clean up (delete all test items)
-    for item in items:
-        if "Item" in item.name:
-            db.delete(item)
-    db.commit()
 
 
 def test_update_item(db):
