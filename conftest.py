@@ -1,9 +1,13 @@
 import os
 import shutil
 from pathlib import Path
+import pytest
 
-# Set the database URL to in-memory BEFORE any tests run
-os.environ["DATABASE_URL"] = "sqlite:///:memory:"
+@pytest.fixture(scope="session", autouse=True)
+def set_test_environment():
+    """Set environment variable before any tests run."""
+    os.environ["DATABASE_URL"] = "sqlite:///:memory:"
+    yield
 
 
 def pytest_sessionfinish(session, exitstatus):
