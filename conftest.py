@@ -1,25 +1,36 @@
 import os
 import shutil
 from pathlib import Path
-import pytest
 
-@pytest.fixture(scope="session", autouse=True)
-def set_test_environment():
-    """Set environment variable before any tests run."""
-    os.environ["DATABASE_URL"] = "sqlite:///:memory:"
-    yield
+
+def pytest_configure(config):
+    os.environ["DATABASE_URL"] = "sqlite:///file:memdb1?mode=memory&cache=shared"
 
 
 def pytest_sessionfinish(session, exitstatus):
-    """Runs automatically after tests finish, ignoring protected folders."""
-    print("\n--- Running automatic cache cleanup ---")
-
+    """Clean up after tests and dispose engine."""
     root = Path(session.config.rootdir)
 
-    # Folders you want to completely ignore
-    ignored_folders = {".venv", "venv", ".git", "env"}
+    # 1. Dispose the engine to close all connections
+    from app.database import engine
+    engine.dispose()
+    print("\n\nEngine disposed, connections closed.")
 
-    # 1. Clear __pycache__ folders while skipping ignored paths
+    # 2. Delete SQLite shared memory files
+    for pattern in ["file", "file-shm", "file-wal"]:
+        file_path = root / pattern
+        if file_path.exists():
+            try:
+                file_path.unlink()
+                print(f"Removed shared memory test database: {file_path}")
+            except Exception as e:
+                print(f"Could not remove {file_path}: {e}")
+                pass
+
+    print("--- Running automatic cache cleanup ---")
+
+    # 3. Clean pycache and pytest_cache
+    ignored_folders = {".venv", "venv", ".git", "env"}
     for cache_dir in root.rglob("__pycache__"):
         # Check if any parent folder is in the ignored list
         if any(part in ignored_folders for part in cache_dir.parts):
@@ -30,7 +41,7 @@ def pytest_sessionfinish(session, exitstatus):
         except Exception:
             pass
 
-    # 2. Clear .pytest_cache folder safely
+    # 4. Clear .pytest_cache folder safely
     pytest_cache = root / ".pytest_cache"
     if pytest_cache.exists():
         try:
