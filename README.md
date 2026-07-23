@@ -27,3 +27,6 @@ If you have issues installing sqlalchemy because of greenlet, simply install gre
 ```
 pip install greenlet==2.0.2 --only-binary :all:
 ```
+
+5. If your frontend is closing silently, verify you have Windows Media Feature optional pack installed in
+Settings → Apps → Optional Features -> Add a feature -> "Media Feature Pack"
